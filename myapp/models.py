@@ -1,8 +1,13 @@
 from django.db import models
 from django.contrib.auth.models import AbstractUser
+from django.contrib.auth.hashers import check_password
 from django.conf import settings
 from datetime import timedelta
 from datetime import datetime
+from typing import List
+import re
+
+CONTROL_CHAR_PATTERN = re.compile(r"[\x00-\x1F\x7F]")
 
 # Create your models here.
 # User
@@ -21,6 +26,10 @@ class User(AbstractUser):
 
 # Account Manager
 class AccountManager:
+    def __init__(self):
+        self.session_token = None
+
+
     def create_account(self, username: str, password: str):
         # create a new user and saved to the database automatically
         user = User.objects.create_user(
@@ -28,6 +37,27 @@ class AccountManager:
             password=password
         )
     
+    def check_login(self, username: str, password: str):
+        try: 
+            user = User.objects.get(username=username)
+
+            if check_password(password, user.password):
+                self.session_token = "123"
+                return "Successful Login"
+            else:
+                return "Password is not correct"
+        except User.DoesNotExist:
+            return "User could not be found"
+        
+    def log_out(self, session_token):
+        if self.session_token == None:
+            return "Unauthorized access error"
+        
+        if not session_token == self.session_token:
+            return "Invalid session token error"
+        else:
+            return "Successful logout"
+
 
 # Task
 class Task(models.Model):
@@ -41,16 +71,70 @@ class Task(models.Model):
     type = models.CharField(max_length=100)
     duration = models.DurationField()
     priority = models.IntegerField()
+    invitees = models.TextField(blank=True, default="")
     due_date = models.DateTimeField()
     reminders = models.BooleanField(default=False)
 
     def __str__(self):
         return f"{self.name} for {self.user.username}"
     
+    def get_invitees_list(self):
+        return [username.strip() for username in self.invitees.split(",") if username.strip()]
+    
+    def set_invitees_list(self, invitees_list):
+        self.invitees = ",".join(invitees_list)
+    
+
+
+# RepeatInterval
+class RepeatInterval:
+    def __init__(self, start: datetime, end: datetime, frequency: timedelta):
+        self.start = start
+        self.end = end
+        self.frequency = frequency
+
+    def is_valid(self):
+        return self.start < self.end
+
+    def parse(self, str):
+        pass
+
+    def next_run():
+        pass
+
 
 # Task Manager
 class TaskManager:
-    def create_task(self, user: User, name: str, type: str, duration: timedelta, priority: int, due_date: datetime, reminders: bool):
+    def create_task(self, user: User, name: str, type: str, repeat_interval: RepeatInterval, duration: timedelta, invitees: list[str], priority: int, due_date: datetime, reminders: bool):
+        
+        valid_types = ["Meeting", "Task"]
+        valid_invitees = ["Tom", "Jerry"]
+
+        if name == "" or CONTROL_CHAR_PATTERN.search(name):
+            return "no name for task"
+
+        if not reminders == True or reminders == False:
+            return "invalid reminder paramter"
+
+        if due_date < datetime.now():
+            return "invalid due date"
+
+        if priority < 1 or priority > 5:
+            return "invalid task priority"
+
+        for invitee in invitees:
+            if invitee not in valid_invitees:
+                return "invalid invitees"
+
+        if duration.total_seconds() < 0:
+            return "duration must be positive"
+
+        if not type in valid_types:
+            return "type of task is not valid"
+        
+        if not repeat_interval.is_valid():
+            return "Interval is not valid"
+        
         task = Task.objects.create(
             user=user,
             name=name,
@@ -60,6 +144,8 @@ class TaskManager:
             due_date=due_date,
             reminders=reminders
         )
+
+        task.set_invitees_list(invitees) # set the invitees 
 
         task.save() # save the task to the database
         return "Successfully created task" # Create task use case
@@ -86,22 +172,13 @@ class TaskManager:
         return "Successfully updated task" # for now
 
 
-# RepeatInterval
-class RepeatInterval:
-    def __init__(self, start: datetime, end: datetime, frequency: timedelta):
-        self.start = start
-        self.end = end
-        self.frequency = frequency
-
-    def parse(self, str):
-        pass
-
-    def next_run():
-        pass
-
 
 # Database Manager
 class DatabaseManager:
+    def __init__(self):
+        self.pages = ["create task", "profile", "log out"]
+
+
     def get_user(self, uid: int): # Retrieve a user
         try:
             user = User.objects.get(id=uid)
@@ -129,6 +206,12 @@ class DatabaseManager:
         pass
 
     
-    def redirect(self, page: str): # Navigate Dashboard Use Case
-        return "Page is set to " + str
+    def redirect(self, page: str, session_time: int): # Navigate Dashboard Use Case
+        if not page in self.pages:
+            return "page does not exist"
+        
+        if session_time > 60: # session time greater than 60 minutes
+            return "user timed out"
+        
+        return "Page is set"
     
