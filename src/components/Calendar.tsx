@@ -1,44 +1,110 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { ChevronLeftIcon, ChevronRightIcon } from "@heroicons/react/24/solid";
 
 type DayProps = {
   day: number;
 };
 function Day({ day }: DayProps) {
-  return <span>{day}</span>;
+  return (
+    <span className="py-3 rounded-full hover:bg-gray-700 transition-all duration-300">
+      {day}
+    </span>
+  );
 }
 
 function Calendar() {
+  const date = new Date();
+  const [currentMonth, setCurrentMonth] = useState<number>(date.getMonth());
+  const [currentYear, setCurrentYear] = useState<number>(date.getFullYear());
+
+  type TimeData = {
+    blanks: number[];
+    days: number[];
+  };
+  function getMonthData(year: number, monthIndex: number): TimeData {
+    const firstDay = new Date(year, monthIndex, 1);
+    const lastDay = new Date(year, monthIndex + 1, 0);
+
+    const totalDays = lastDay.getDate();
+    const startWeekDay = firstDay.getDay();
+
+    //const days = ["SUN", "MON", "TUE", "WED", "THU", "FRI", "SAT"];
+
+    const blanks: number[] = Array(startWeekDay).fill(0);
+    const days: number[] = Array.from({ length: totalDays }, (_, i) => i + 1);
+
+    return { blanks, days };
+  }
+
+  const { blanks, days } = getMonthData(currentYear, currentMonth);
+
+  const months = [
+    "January",
+    "February",
+    "March",
+    "April",
+    "May",
+    "June",
+    "July",
+    "August",
+    "September",
+    "October",
+    "November",
+    "December",
+  ];
+
   return (
     <>
       <div className="h-14 w-100 bg-[#d9d9d9] font-bungee text-[#47034b] text-4xl flex justify-center items-center rounded-sm">
         <span>Calendar</span>
       </div>
-      <div className="h-100 w-100 bg-[#47034b] text-white rounded-lg">
+      <div className="h-118 w-100 bg-[#47034b] text-white rounded-lg px-3 pb-3">
         {/*Month & Year row*/}
         <div className="w-full flex justify-around items-center py-10 font-medium text-2xl">
           {/*Left Arrow*/}
           <div className="group w-8 h-8 rounded-full flex justify-center items-center transition-all duration-300">
-            <div className="group-hover:bg-white rounded-full p-1 transition-all duration-300">
+            <div
+              className="group-hover:bg-white rounded-full p-1 transition-all duration-300"
+              onClick={() => {
+                if (currentMonth === 0) {
+                  setCurrentMonth(11);
+                  setCurrentYear(currentYear - 1);
+                } else {
+                  setCurrentMonth(currentMonth - 1);
+                }
+              }}
+            >
               <ChevronLeftIcon className="h-6 w-6 text-gray-300 group-hover:text-black transition-colors duration-300" />
             </div>
           </div>
 
           {/*Month & Year*/}
-          <div>
-            <span>September 2021</span>
+          <div className="w-[200px] text-center">
+            <span>
+              {months[currentMonth]} {currentYear}
+            </span>
           </div>
 
           {/*Right Arrow*/}
           <div className="group w-8 h-8 rounded-full flex justify-center items-center transition-all duration-300">
-            <div className="group-hover:bg-white rounded-full p-1 transition-all duration-300">
+            <div
+              className="group-hover:bg-white rounded-full p-1 transition-all duration-300"
+              onClick={() => {
+                if (currentMonth === 11) {
+                  setCurrentMonth(0);
+                  setCurrentYear(currentYear + 1);
+                } else {
+                  setCurrentMonth(currentMonth + 1);
+                }
+              }}
+            >
               <ChevronRightIcon className="h-6 w-6 text-gray-300 group-hover:text-black transition-colors duration-300" />
             </div>
           </div>
         </div>
 
         {/*Weekday row*/}
-        <div className="w-full flex justify-center items-center gap-5 font-semibold">
+        <div className="grid grid-cols-7 gap-2 font-semibold text-gray-400 text-center">
           <span>SUN</span>
           <span>MON</span>
           <span>TUE</span>
@@ -49,14 +115,13 @@ function Calendar() {
         </div>
 
         {/*Days of the month*/}
-        <div>
-          {/*Array(31)
-          .fill(0)
-          .map((_, index) => {
-            return <Day key={index} day={index + 1} />;
-          })*/}
-          {/*4/15 apply similar styles as the weekday row */}
-          <Day day={10} />
+        <div className="grid grid-cols-7 gap-2 text-center">
+          {blanks.map((_, index) => {
+            return <div key={index}></div>;
+          })}
+          {days.map((day, index) => {
+            return <Day key={index} day={day} />;
+          })}
         </div>
       </div>
     </>
