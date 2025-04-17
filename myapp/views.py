@@ -1,3 +1,4 @@
+from django.contrib.auth import authenticate
 from django.shortcuts import render, HttpResponse
 from myapp.models import User
 
@@ -5,15 +6,55 @@ from myapp.models import User
 def home(request):
     return HttpResponse("hello world")
 
-def register(request, username, password):
+def register(request):
+    if request.method != "POST":
+        return HttpResponse("Invalid request")
+
+    if request.session.get("user_id"):
+        return HttpResponse("User already logged in")
+
+    username = request.POST.get("username")
+
+    print(username)
+    password = request.POST.get("password")
 
     try:
         curr_usr = User.objects.get(username=username)
-        passc = curr_usr.check_password(password)
-        if passc:
-            return HttpResponse("Welcome back " + curr_usr.username)
-        else:
-            return HttpResponse("Invalid password")
-    except User.DoesNotExist:
+        return HttpResponse("User already exists")
+    except Exception:
         curr_usr = User.objects.create_user(username=username, password=password)
+        curr_usr.save()
         return HttpResponse("Created new user: " + curr_usr.username)
+
+def login(request):
+
+    if request.method != "POST":
+        return HttpResponse("Invalid request")
+    if request.session.get("user_id"):
+        return HttpResponse("User already logged in")
+
+    username = request.POST.get("username")
+    password = request.POST.get("password")
+    user = authenticate(username=username, password=password)
+
+    if user is not None:
+        request.session["user_id"] = user.id
+        return HttpResponse("Login successful")
+    else:
+        return HttpResponse("Invalid login")
+
+def update_user(request):
+    pass
+
+def create_task(request):
+    pass
+
+def get_task(request):
+    pass
+
+def update_task(request):
+    pass
+
+def logout(request):
+    request.session.flush()
+    return HttpResponse("Logged out")
