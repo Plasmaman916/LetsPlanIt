@@ -12,7 +12,7 @@ function Navigation() {
         <ul className="flex-1 flex justify-end items-center gap-18 pr-21 pt-3">
           <li>
             <a
-              href="/create_task"
+              href="/create"
               className="font-bungee text-white flex flex-col justify-center items-center hover:text-[#2b3328] transition-all duration-175"
             >
               <img src="/add.png" width="32" height="32" />

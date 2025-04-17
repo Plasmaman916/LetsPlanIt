@@ -6,7 +6,7 @@ type DayProps = {
 };
 function Day({ day }: DayProps) {
   return (
-    <span className="py-3 rounded-full hover:bg-gray-700 transition-all duration-300">
+    <span className="py-3 rounded-full hover:bg-gray-700 transition-all duration-300 font-bold">
       {day}
     </span>
   );
@@ -54,11 +54,11 @@ function Calendar() {
   ];
 
   return (
-    <>
-      <div className="h-14 w-100 bg-[#d9d9d9] font-bungee text-[#47034b] text-4xl flex justify-center items-center rounded-sm">
+    <div className="">
+      <div className="h-14 w-100 bg-white font-bungee text-[#47034b] text-4xl flex justify-center items-center rounded-lg shadow-xl/50">
         <span>Calendar</span>
       </div>
-      <div className="h-118 w-100 bg-[#47034b] text-white rounded-lg px-3 pb-3">
+      <div className="h-118 w-100 bg-[#47034b] text-white rounded-lg px-3 pb-3 shadow-xl/50">
         {/*Month & Year row*/}
         <div className="w-full flex justify-around items-center py-10 font-medium text-2xl">
           {/*Left Arrow*/}
@@ -124,7 +124,7 @@ function Calendar() {
           })}
         </div>
       </div>
-    </>
+    </div>
   );
 }
 
