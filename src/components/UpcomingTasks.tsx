@@ -58,8 +58,7 @@ function UpcomingTasks() {
       <div className="h-14 w-100 bg-[#4A4458] text-[#d0bcfe] font-bungee text-4xl flex justify-center items-center rounded-md">
         <span>Upcoming Tasks</span>
       </div>
-
-      {/*Sample Tasks*/}
+      {/*Sample Tasks*/} {/*Only two TaskCards should be displayed*/}
       <div className="flex flex-col justify-center items-center gap-2 pt-2">
         <TaskCard
           name={"SE 3354 Homework"}

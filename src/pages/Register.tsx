@@ -1,9 +1,66 @@
 import { useState } from "react";
+import { useNavigate } from "react-router-dom";
 
 function Register() {
+  const navigate = useNavigate();
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
+
+  const [errorMessage, setErrorMessage] = useState("");
+
+  const onSubmit = async (e: any) => {
+    e.preventDefault();
+
+    // first check if password and confirmPassword match
+    if (password !== confirmPassword) {
+      setErrorMessage("You must confirm your password correctly");
+      return;
+    }
+
+    const data = {
+      username,
+      password,
+    };
+
+    try {
+      const url = "http://localhost:8000/register";
+      const options = {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(data),
+      };
+
+      const response = await fetch(url, options);
+
+      if (!response.ok) {
+        console.error("There was an error sending the request");
+      } else {
+        const text: string = await response.text();
+        console.log(text);
+        if (text === "User already exists") {
+          setErrorMessage(text);
+          console.log(text);
+        } else if (text === `Created new user:  ${username}`) {
+          console.log(text);
+          redirectToDashboard();
+        }
+      }
+    } catch (error) {
+      console.error("There was an error sending the request");
+    }
+  };
+
+  const redirectToDashboard = () => {
+    // after successfully registering
+    navigate("/dashboard", {
+      state: {
+        username: username,
+      },
+    });
+  };
 
   return (
     <>
@@ -20,7 +77,7 @@ function Register() {
             <h1 className="font-bungee font-bold text-5xl">Register</h1>
           </div>
 
-          <form className="flex flex-col items-center pt-6">
+          <form className="flex flex-col items-center pt-6" onSubmit={onSubmit}>
             <div className="flex">
               <img
                 src="/user.png"
@@ -67,7 +124,7 @@ function Register() {
             {/*Style Login Button */}
             <button
               type="submit"
-              className="w-37 h-13 rounded-lg bg-[#8a048c] border-2 hover:bg-[#e002e3] active:bg-[#ee8bdf] transition-all duration-200"
+              className="w-37 h-13 rounded-lg bg-[#8a048c] border-2 hover:bg-[#e002e3] active:bg-[#ee8bdf] transition-all duration-200 cursor-pointer"
             >
               <span className="font-bold font-bungee text-2xl">REGISTER </span>
             </button>
@@ -77,6 +134,7 @@ function Register() {
             <a href="/">Already have an account? Login</a>
           </span>
           <br />
+          <span className="font-calistoga text-red-500">{errorMessage}</span>
           <br />
         </div>
       </div>

@@ -1,6 +1,7 @@
 from django.contrib.auth import authenticate
 from django.shortcuts import render, HttpResponse
 from myapp.models import User
+import json
 
 # Create your views here.
 def home(request):
@@ -13,11 +14,17 @@ def register(request):
     if request.session.get("user_id"):
         return HttpResponse("User already logged in")
 
-    username = request.POST.get("username")
+    # username = request.POST.get("username")
 
-    print(username)
-    password = request.POST.get("password")
+    body_unicode = request.body.decode("utf-8")
+    body = json.loads(body_unicode)
 
+    username = body["username"]
+    password = body["password"]
+    #response = username, "this is the request body's username", password, "this is the request body's password"
+    #return HttpResponse(response)
+
+    
     try:
         curr_usr = User.objects.get(username=username)
         return HttpResponse("User already exists")
@@ -25,6 +32,7 @@ def register(request):
         curr_usr = User.objects.create_user(username=username, password=password)
         curr_usr.save()
         return HttpResponse("Created new user: " + curr_usr.username)
+    
 
 def login(request):
 
@@ -32,9 +40,15 @@ def login(request):
         return HttpResponse("Invalid request")
     if request.session.get("user_id"):
         return HttpResponse("User already logged in")
+    
+    body_unicode = request.body.decode("utf-8")
+    body = json.loads(body_unicode)
 
-    username = request.POST.get("username")
-    password = request.POST.get("password")
+    username = body["username"]
+    password = body["password"]
+
+    # username = request.POST.get("username")
+    # password = request.POST.get("password")
     user = authenticate(username=username, password=password)
 
     if user is not None:

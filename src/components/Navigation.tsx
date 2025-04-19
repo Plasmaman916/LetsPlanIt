@@ -1,5 +1,36 @@
+import { useNavigate } from "react-router-dom";
+
 function Navigation() {
-  // 4/12 fix spacing, size, and alignment of each link and its symbol
+  const navigate = useNavigate();
+  const logout = async (e: any) => {
+    e.preventDefault();
+    const url = "http://localhost:8000/logout";
+
+    try {
+      const response = await fetch(url);
+
+      if (!response.ok) {
+        console.error("An error occurred while trying to logout");
+      } else {
+        // successful request
+        const text = await response.text();
+        if (text === "Logged out") {
+          // logout
+          redirectToRoot();
+        } else {
+          // this should not executed
+          console.log("this should not execute");
+        }
+      }
+    } catch (error) {
+      console.error("An error occurred while trying tp log out", error);
+    }
+  };
+
+  const redirectToRoot = () => {
+    navigate("/", { replace: true });
+  };
+
   return (
     <header className="w-full h-18 bg-[#4A4458]">
       <nav className="flex justify-between items-center">
@@ -32,7 +63,7 @@ function Navigation() {
               </span>
             </a>
           </li>
-          <li>
+          <li onClick={logout}>
             <a
               href="/"
               className="font-bungee text-white flex flex-col justify-center items-center hover:text-[#2b3328] transition-all duration-175"
