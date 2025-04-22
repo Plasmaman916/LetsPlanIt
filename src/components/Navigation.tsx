@@ -23,7 +23,7 @@ function Navigation() {
         }
       }
     } catch (error) {
-      console.error("An error occurred while trying tp log out", error);
+      console.error("An error occurred while trying to log out", error);
     }
   };
 

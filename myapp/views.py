@@ -14,15 +14,12 @@ def register(request):
     if request.session.get("user_id"):
         return HttpResponse("User already logged in")
 
-    # username = request.POST.get("username")
 
     body_unicode = request.body.decode("utf-8")
     body = json.loads(body_unicode)
 
     username = body["username"]
     password = body["password"]
-    #response = username, "this is the request body's username", password, "this is the request body's password"
-    #return HttpResponse(response)
 
     
     try:
@@ -47,8 +44,6 @@ def login(request):
     username = body["username"]
     password = body["password"]
 
-    # username = request.POST.get("username")
-    # password = request.POST.get("password")
     user = authenticate(username=username, password=password)
 
     if user is not None:
