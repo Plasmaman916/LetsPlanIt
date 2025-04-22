@@ -7,10 +7,6 @@ from django.shortcuts import render, HttpResponse
 from myapp.models import User, Task
 import json
 
-# Create your views here.
-def home(request):
-    return HttpResponse("hello world")
-
 def register(request):
     if request.method != "POST":
         return HttpResponse("Invalid request")
@@ -223,6 +219,22 @@ def update_task(request):
     user_task.save()
 
     return HttpResponse("Task updated")
+
+
+def get_user_data(request):
+    if request.method != "GET":
+        return HttpResponse("Invalid request")
+
+    if not request.session.get("user_id"):
+        return HttpResponse("User not logged in")
+
+    curr_usr = User.objects.get(id=request.session.get("user_id"))
+    if not curr_usr:
+        return HttpResponse("User not found")
+
+    return HttpResponse(serializers.serialize('json',[curr_usr]), content_type="application/json")
+
+
 
 def logout(request):
     request.session.flush()
