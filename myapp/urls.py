@@ -11,4 +11,5 @@ urlpatterns = [
     path("get_task", views.get_task, name="get_task"),
     path("update_task", views.update_task, name="update_task"),
     path("get_user_data", views.get_user_data, name="get_user_data"),
+    path("send_new_password", views.send_new_password, name="send_new_password"),
 ]
