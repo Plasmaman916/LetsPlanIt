@@ -16,12 +16,30 @@ function Dashboard() {
     } else {
       setUsername(location.state.username);
     }
+
+    async function test() {
+      try {
+        const response = await fetch("http://localhost:8000/session");
+
+        if (!response.ok) {
+          console.error("An error ocurred");
+        } else {
+          const text: string = await response.text();
+          console.log(text);
+        }
+      } catch (error) {
+        console.error(error);
+      }
+    }
+
+    test();
   }, []);
 
+  console.log(username);
   return (
     <>
       <div className="bg-[#d3d3d3] relative">
-        <Navigation />
+        <Navigation username={username} />
         <span className="font-bungee text-[#47034b] text-3xl relative top-7 left-10">
           Welcome Back, {username}!
         </span>

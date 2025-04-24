@@ -71,9 +71,16 @@ class Task(models.Model):
     type = models.CharField(max_length=100)
     duration = models.DurationField()
     priority = models.IntegerField()
-    invitees = models.TextField(blank=True, default="")
+    # invitees = models.TextField(blank=True, default="") # invitees should be a many to many relationship
     due_date = models.DateTimeField()
     reminders = models.BooleanField(default=False)
+
+    # many to many for invited users
+    invitees = models.ManyToManyField(
+        settings.AUTH_USER_MODEL,
+        related_name="shared_tasks",
+        blank=True
+    )
 
     def __str__(self):
         return f"{self.name} for {self.user.username}"

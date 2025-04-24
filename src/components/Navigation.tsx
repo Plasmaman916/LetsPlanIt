@@ -1,6 +1,6 @@
 import { useNavigate } from "react-router-dom";
 
-function Navigation() {
+function Navigation({ username }) {
   const navigate = useNavigate();
   const logout = async (e: any) => {
     e.preventDefault();
@@ -31,10 +31,21 @@ function Navigation() {
     navigate("/", { replace: true });
   };
 
+  // 4/23 okay well username is fucking empty for some reason
+  const navigateToDashboard = (e: any) => {
+    e.preventDefault();
+    console.log(username, "this is the username");
+    navigate("/dashboard", {
+      state: {
+        username: username,
+      },
+    });
+  };
+
   return (
     <header className="w-full h-18 bg-[#4A4458]">
       <nav className="flex justify-between items-center">
-        <a href="/dashboard" className="pt-2">
+        <a href="#" className="pt-2" onClick={navigateToDashboard}>
           <span className="font-bungee text-white font-bold text-3xl pl-21 hover:text-[#2b3328] transition-all duration-100">
             Let's Plan It
           </span>

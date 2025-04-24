@@ -52,10 +52,40 @@ def login(request):
 
     if user is not None:
         request.session["user_id"] = user.id
+        print(request.session["user_id"])
         return HttpResponse("Login successful")
     else:
         return HttpResponse("Invalid login")
+    
+# 4/23 django gpt answer + watch vid on django session
+# temp, delete
+def session(request):
+    if not request.session.get("user_id"):
+        return HttpResponse("the session does not have the user id")
+    
+    id = request.session.get("user_id")
+    return HttpResponse(f"The session has the user id of {id}")
 
+def search_user(request):
+    if request.method != "POST":
+        return HttpResponse("Invalid request")
+    
+    if not request.session.get("user_id"):
+        print(request.session.get("user_id"), " this is the request.session")
+        return HttpResponse("User not logged in")
+    
+    body_unicode = request.body.decode("utf-8")
+    body = json.loads(body_unicode)
+
+    username = body["username"]
+
+    user = User.objects.get(username=username)
+
+    if user:
+        return HttpResponse("Found user")
+    else:
+        return HttpResponse("Could not find user")
+    
 
 def update_user(request):
     if request.method != "POST":
@@ -81,7 +111,7 @@ def update_user(request):
     return HttpResponse("Password updated")
 
 
-
+# invitees will be received as a list of strings (usernames) which will then all be invited to the task
 def create_task(request):
     if request.method != "POST":
         return HttpResponse("Invalid request")
@@ -96,11 +126,13 @@ def create_task(request):
     body_unicode = request.body.decode("utf-8")
     body = json.loads(body_unicode)
 
+    def parse(): # decide whether to assign type as task or meeting
+        pass
+
     name = body["name"]
     type = body["type"]
     duration = body["duration"]
     priority = body["priority"]
-    invitees = body["invitees"]
     due_date = body["due_date"]
     reminders = body["reminders"]
 
@@ -120,10 +152,16 @@ def create_task(request):
                                type=type,
                                duration=timedelta_object,
                                priority=priority,
-                               invitees=invitees,
                                due_date=datetime_object,
                                reminders=reminders,
                                user=curr_usr)
+    
+    # invite users to task
+    users_to_invite = body["invitees"] # string array of usernames
+    # each user has been validated already
+    for username in users_to_invite:
+        user = User.objects.get(username=username)
+        task.invitees.add(user)
 
     task.save()
     return HttpResponse("Task created")

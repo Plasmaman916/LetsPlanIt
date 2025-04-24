@@ -38,7 +38,7 @@ function Login() {
           setErrorMessage("Username or Password is incorrect");
         } else {
           // successful login
-          console.log("Else block reached");
+          console.log(text);
           redirectToDashboard();
         }
       }

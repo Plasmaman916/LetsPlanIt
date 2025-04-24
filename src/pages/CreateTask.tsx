@@ -2,11 +2,66 @@ import { useState } from "react";
 import Navigation from "../components/Navigation";
 import Calendar from "../components/Calendar";
 import UpcomingTasks from "../components/UpcomingTasks";
-import { TrashIcon, CheckIcon } from "@heroicons/react/24/solid";
+import {
+  TrashIcon,
+  CheckIcon,
+  MagnifyingGlassIcon,
+} from "@heroicons/react/24/solid";
+
+function InviteeTabs({ username }) {
+  return (
+    <div className="h-7 rounded-2xl bg-gray-100">
+      <span className="px-3 text-gray-500">{username}</span>
+    </div>
+  );
+}
 
 function CreateInputs() {
+  // useState
+  const [invitees, setInvitees] = useState<string[]>([]);
+  const [invitee, setInvitee] = useState<string>("");
+  const [unableToFindUser, setUnableToFindUser] = useState<boolean>(false);
+
+  async function searchUser() {
+    const data = {
+      username: invitee,
+    };
+    const url = "http://localhost:8000/search_user";
+    const options = {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify(data),
+    };
+
+    try {
+      const response = await fetch(url, options);
+
+      if (!response.ok) {
+        console.error("An issue occurred while searching for a user");
+        // display 'unable to find username' text
+      } else {
+        const text: string = await response.text();
+
+        if (text === "Could not find user") {
+          console.error("An issue occurred while searching for a user");
+          // display 'unable to find username' text
+          setUnableToFindUser(true);
+        } else {
+          // found the username
+          // add this user to invitees
+          console.log(text);
+          setInvitees((prevInvitees) => [...prevInvitees, invitee]);
+          setUnableToFindUser(false);
+        }
+      }
+    } catch (error) {
+      console.error(error);
+    }
+  }
   return (
-    <div className="h-120 w-110 bg-white rounded-lg shadow-xl/30">
+    <div className="w-110 bg-white rounded-lg shadow-xl/30">
       <div className="font-bungee text-[#47034b] text-5xl py-3 pl-3">
         <span>Create Task</span>
       </div>
@@ -46,7 +101,6 @@ function CreateInputs() {
             />
           </div>
 
-          {/*4/15 Align Time input correctly*/}
           {/*Time Input*/}
           <div className="flex flex-col items-start w-[300px] space-y-1 pl-4">
             <label className="font-bungee text-[#47034b] text-2xl">Time</label>
@@ -73,6 +127,47 @@ function CreateInputs() {
             <option value="4">4</option>
             <option value="5">5 (lowest)</option>
           </select>
+        </div>
+
+        {/*Reminders*/}
+        <div className="flex items-start w-[300px] space-x-4 pl-7">
+          <label className="font-bungee text-[#47034b] text-2xl">
+            Reminders?
+          </label>
+
+          <label className="inline-flex items-center cursor-pointer pt-1">
+            <input type="checkbox" value="" className="sr-only peer" />
+            <div className="relative w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-3 peer-focus:[#8a048c] dark:peer-focus:ring-blue-800 rounded-full peer dark:bg-gray-700 peer-checked:after:translate-x-full rtl:peer-checked:after:-translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:start-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all dark:border-gray-600 peer-checked:bg-[#8a048c] dark:peer-checked:bg-blue-600"></div>
+          </label>
+        </div>
+
+        {/* Search for Invitees*/}
+        <div className="flex flex-col items-start w-[300px] space-y-1 pl-7">
+          <label className="font-bungee text-[#47034b] text-2xl">
+            Invite People
+          </label>
+
+          <div className="relative w-fit">
+            <input
+              type="text"
+              placeholder="Search Username"
+              className="bg-gray-100 h-9 w-72 pl-3 pr-10 rounded-lg border border-gray-300 focus:border-[#8a048c] outline-none transition-all duration-100 font-sans"
+              onChange={(e) => setInvitee(e.target.value)}
+            />
+            <MagnifyingGlassIcon
+              className="absolute right-2 top-1/2 -translate-y-1/2 h-5 w-5 text-gray-500 cursor-pointer"
+              onClick={searchUser}
+            />
+          </div>
+        </div>
+
+        {/*Display the list of invitees that are invited*/}
+        <div className="flex flex-col items-start w-[300px] space-y-1 pl-7">
+          <div className="flex flex-wrap gap-2 items-center justify-start">
+            {invitees.map((invitee, index) => {
+              return <InviteeTabs key={index} username={invitee} />;
+            })}
+          </div>
         </div>
 
         {/*Clear and Submit Buttons*/}
@@ -106,12 +201,27 @@ function CreateInputs() {
 }
 
 function CreateTask() {
+  async function test() {
+    try {
+      const response = await fetch("http://localhost:8000/session");
+
+      if (!response.ok) {
+        console.error("An error ocurred");
+      } else {
+        const text: string = await response.text();
+        console.log(text);
+      }
+    } catch (error) {
+      console.error(error);
+    }
+  }
+
+  test();
+
   return (
     <>
       <div className="bg-[#d3d3d3] relative min-h-screen ">
         <Navigation />
-        <br />
-        <br />
         <br />
         <br />
         <div className="flex justify-center items-center ">
