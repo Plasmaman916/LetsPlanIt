@@ -211,6 +211,25 @@ def get_all_tasks(request):
 
     return HttpResponse(serializers.serialize('json',Task.objects.filter(user=curr_usr)), content_type="application/json")
 
+def get_shared_tasks(request):
+    if request.method != "GET":
+        return JsonResponse({"message": "Invalid request"})
+    
+    if not request.session.get("user_id"):
+        return JsonResponse({"message": "User not found"})
+    
+    curr_user = User.objects.get(id=request.session.get("user_id"))
+    if not curr_user:
+        return JsonResponse({"message": "User not found"})
+    
+    print("executing here")
+    shared_tasks = curr_user.shared_tasks.all()
+
+    serialized_tasks = serializers.serialize('json', shared_tasks)
+
+    task_data = json.loads(serialized_tasks)
+    return JsonResponse({"message": "Found the user's shared tasks", "data": task_data})
+
 def update_task(request):
     if request.method != "POST":
         return HttpResponse("Invalid request")
