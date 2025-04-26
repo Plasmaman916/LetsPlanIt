@@ -23,6 +23,9 @@ function CreateInputs() {
   const [invitee, setInvitee] = useState<string>("");
   const [unableToFindUser, setUnableToFindUser] = useState<boolean>(false);
   const [userAddedAlready, setUserAddedAlready] = useState<boolean>(false);
+  const [needToProvideDetails, setNeedToProvideDetails] =
+    useState<boolean>(false);
+  const [cannotAddYourself, setCannotAddYourself] = useState<boolean>(false);
 
   const [ableToCreateTask, setAbleToCreateTask] = useState<boolean>(false);
   const [unableToCreateTask, setUnableToCreateTask] = useState<boolean>(false);
@@ -59,6 +62,8 @@ function CreateInputs() {
           console.error("An issue occurred while searching for a user");
           // display 'unable to find username' text
           setUserAddedAlready(false);
+          setNeedToProvideDetails(false);
+          setCannotAddYourself(false);
           setUnableToFindUser(true);
         } else {
           const text: string = await response.text();
@@ -67,7 +72,14 @@ function CreateInputs() {
             console.error("An issue occurred while searching for a user");
             // display 'unable to find username' text
             setUserAddedAlready(false);
+            setNeedToProvideDetails(false);
+            setCannotAddYourself(false);
             setUnableToFindUser(true);
+          } else if (text === "Cannot share to yourself") {
+            setUserAddedAlready(false);
+            setNeedToProvideDetails(false);
+            setUnableToFindUser(false);
+            setCannotAddYourself(true);
           } else {
             // found the username
             // add this user to invitees
@@ -76,6 +88,8 @@ function CreateInputs() {
 
             setUnableToFindUser(false);
             setUserAddedAlready(false);
+            setNeedToProvideDetails(false);
+            setCannotAddYourself(false);
           }
         }
       } catch (error) {
@@ -106,8 +120,14 @@ function CreateInputs() {
     console.log(validateFields());
     if (!validateFields()) {
       console.log("Need to provide a title, description, dueDate, and dueTime");
+      setUnableToFindUser(false);
+      setUserAddedAlready(false);
+      setNeedToProvideDetails(false);
+      setCannotAddYourself(false);
+      setNeedToProvideDetails(true);
     } else {
       // need to combine dueDate and dueTime
+      setNeedToProvideDetails(false);
       const taskDue = dueDate + " " + dueTime;
       const taskData = {
         name: title,
@@ -293,10 +313,14 @@ function CreateInputs() {
         </div>
 
         <span className="pl-7 text-red-400">
-          {userAddedAlready
+          {cannotAddYourself
+            ? "Cannot share to yourself!"
+            : userAddedAlready
             ? "User added already!"
             : unableToFindUser
             ? "Couldn't find user!"
+            : needToProvideDetails
+            ? "Need to provide a title, description, time, date, and priority!"
             : ""}
         </span>
 
@@ -367,9 +391,12 @@ function CreateTask() {
 
     async function getUsername() {
       try {
-        const response = await fetch("http://localhost:5173/api/session_username", {
-          credentials: "include" as const,
-        });
+        const response = await fetch(
+          "http://localhost:5173/api/session_username",
+          {
+            credentials: "include" as const,
+          }
+        );
 
         if (!response.ok) {
           console.error("An error occurred");

@@ -91,6 +91,9 @@ def search_user(request):
 
     username = body["username"]
 
+    if username == request.session["username"]:
+        return HttpResponse("Cannot share to yourself")
+
     user = User.objects.get(username=username)
 
     if user:
@@ -209,7 +212,7 @@ def get_all_tasks(request):
     if not curr_usr:
         return HttpResponse("User not found")
 
-    return HttpResponse(serializers.serialize('json',Task.objects.filter(user=curr_usr)), content_type="application/json")
+    return HttpResponse(serializers.serialize('json',Task.objects.filter(user=curr_usr, completed=False)), content_type="application/json")
 
 def get_shared_tasks(request):
     if request.method != "GET":
@@ -223,7 +226,7 @@ def get_shared_tasks(request):
         return JsonResponse({"message": "User not found"})
     
     print("executing here")
-    shared_tasks = curr_user.shared_tasks.all()
+    shared_tasks = curr_user.shared_tasks.filter(completed=False)
 
     serialized_tasks = serializers.serialize('json', shared_tasks)
 
@@ -256,8 +259,7 @@ def update_task(request):
         new_name_task = Task.objects.filter(user=curr_usr).filter(name=new_name)
         if new_name_task.exists():
             return HttpResponse("Task with name already exists")
-    type = body["type"]
-    duration = body["duration"]
+    description = body["description"]
     priority = body["priority"]
     invitees = body["invitees"]
     due_date = body["due_date"]
@@ -267,7 +269,6 @@ def update_task(request):
 
     datetime_object = datetime.strptime(due_date, format_string)
 
-    timedelta_object = timedelta(seconds=duration)
 
     if not name or len(name) == 0:
         return HttpResponse("Name not provided")
@@ -275,8 +276,7 @@ def update_task(request):
     if new_name and len(new_name) > 0:
         user_task.name = new_name
 
-    user_task.type = type
-    user_task.duration = timedelta_object
+    user_task.description = description
     user_task.priority = priority
     user_task.invitees = invitees
     user_task.due_date = datetime_object
@@ -298,6 +298,32 @@ def get_user_data(request):
         return HttpResponse("User not found")
 
     return HttpResponse(serializers.serialize('json',[curr_usr]), content_type="application/json")
+
+def complete_task(request):
+    if request.method != "POST":
+        return JsonResponse({"error": "Invalid request"})
+    
+    if not request.session.get("user_id"):
+        return JsonResponse({"error": "User not logged in"})
+    
+    curr_user = User.objects.get(id=request.session.get("user_id"))
+    if not curr_user:
+        return JsonResponse({"error": "User not found"})
+    
+    body_unicode = request.body.decode("utf-8")
+    body = json.loads(body_unicode)
+
+    task_name = body["name"] # name of the task to be completed
+    task = Task.objects.filter(user=curr_user).get(name=task_name)
+
+    if not task:
+        return JsonResponse({"error": "Task does not exist"})
+    
+    task.completed = True
+    task.save()
+
+    return JsonResponse({"message" : f"Sucessfully completed {task_name}"})
+
 
 
 

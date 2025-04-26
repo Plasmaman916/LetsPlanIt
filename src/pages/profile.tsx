@@ -15,6 +15,43 @@ type TaskCardProps = {
 };
 
 function TaskCard({ name, dueDate, priority, dueTime }: TaskCardProps) {
+  const [complete, setComplete] = useState<boolean>(false);
+
+  const completeTask = async () => {
+    setComplete(true);
+
+    const data = {
+      name: name,
+    };
+    try {
+      const options = {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(data),
+        credentials: "include" as const,
+      };
+      const response = await fetch(
+        "http://localhost:5173/api/complete_task",
+        options
+      );
+
+      if (!response.ok) {
+        console.error("There was an error sending a request to mark complete");
+      } else {
+        const data = await response.json();
+
+        if (data.error) {
+          console.log("AN error occurred", data.error);
+        } else {
+          console.log("Successful: ", data.message);
+        }
+      }
+    } catch (error) {
+      console.error(error);
+    }
+  };
   const priorityColors = [
     "text-red-600",
     "text-orange-500",
@@ -24,20 +61,34 @@ function TaskCard({ name, dueDate, priority, dueTime }: TaskCardProps) {
   ];
 
   return (
-    <div className="w-full h-40 bg-[#d0bcff] rounded-md flex flex-col justify-center items-center gap-2 relative">
+    <div
+      className={`w-full h-40 bg-[#d0bcff] rounded-md flex flex-col justify-center items-center gap-2 relative transition-all duration-300 ${
+        complete ? "opacity-50" : "opacity-100"
+      }`}
+    >
       {/*Edit Button*/}
       <div className="absolute top-2 right-2">
-        <PencilSquareIcon className="w-11 h-11 text-[#4a4458] cursor-pointer hover:text-white" />
+        <PencilSquareIcon className="w-11 h-11 text-[#4a4458] cursor-pointer hover:text-white transition-all duration-200" />
       </div>
 
       {/*Task name*/}
       <div>
-        <span className="font-bungee text-2xl text-[#47034b]">{name}</span>
+        <span
+          className={`font-bungee text-2xl text-[#47034b] ${
+            complete ? "line-through" : ""
+          }`}
+        >
+          {name}
+        </span>
       </div>
 
       {/*Due Date*/}
       <div>
-        <span className="font-bungee text-2xl text-[#47034b]">
+        <span
+          className={`font-bungee text-2xl text-[#47034b] ${
+            complete ? "line-through" : ""
+          }`}
+        >
           Due: {dueDate} @ {dueTime}
         </span>
       </div>
@@ -45,10 +96,17 @@ function TaskCard({ name, dueDate, priority, dueTime }: TaskCardProps) {
       {/* Priority */}
       <div>
         <span
-          className={`font-bungee text-1xl ${priorityColors[priority - 1]}`}
+          className={`font-bungee text-1xl ${priorityColors[priority - 1]} ${
+            complete ? "line-through" : ""
+          }`}
         >
           Priority: {priority}
         </span>
+      </div>
+
+      {/*Complete Button*/}
+      <div className="absolute bottom-2 right-2" onClick={completeTask}>
+        <CheckCircle className="h-11 w-11 text-green-500 cursor-pointer hover:text-green-200 transition-all duration-200" />
       </div>
     </div>
   );
@@ -460,7 +518,7 @@ export default function Profile() {
                 Shared Tasks
               </h2>
               <p className="text-gray-600 mb-6">
-                Tasks that are shared with other users
+                Tasks that other users have shared with you
               </p>
 
               {isLoading ? (
