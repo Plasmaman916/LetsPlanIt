@@ -4,7 +4,7 @@ function Navigation({ username }) {
   const navigate = useNavigate();
   const logout = async (e: any) => {
     e.preventDefault();
-    const url = "http://localhost:8000/logout";
+    const url = "http://localhost:5173/api/logout";
 
     try {
       const response = await fetch(url, {

@@ -12,7 +12,7 @@ function Dashboard() {
   useEffect(() => {
     async function checkLoggedIn() {
       try {
-        const response = await fetch("http://localhost:8000/session", {
+        const response = await fetch("http://localhost:5173/api/session", {
           credentials: "include" as const,
         });
 
@@ -36,7 +36,7 @@ function Dashboard() {
 
     async function retrieveUsername() {
       try {
-        const response = await fetch("http://localhost:8000/session_username", {
+        const response = await fetch("http://localhost:5173/api/session_username", {
           credentials: "include" as const,
         });
 

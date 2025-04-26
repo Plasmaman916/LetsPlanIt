@@ -16,7 +16,7 @@ function Login() {
         username,
         password,
       };
-      const url = "http://localhost:8000/login";
+      const url = "http://localhost:5173/api/login";
       const options = {
         method: "POST",
         headers: {

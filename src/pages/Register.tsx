@@ -24,7 +24,7 @@ function Register() {
     };
 
     try {
-      const url = "http://localhost:8000/register";
+      const url = "http://localhost:5173/api/register";
       const options = {
         method: "POST",
         headers: {

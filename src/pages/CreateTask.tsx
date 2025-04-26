@@ -36,7 +36,7 @@ function CreateInputs() {
     const data = {
       username: invitee,
     };
-    const url = "http://localhost:8000/search_user";
+    const url = "http://localhost:5173/api/search_user";
     const options = {
       method: "POST",
       headers: {
@@ -256,7 +256,7 @@ function CreateTask() {
   useEffect(() => {
     async function checkLoggedIn() {
       try {
-        const response = await fetch("http://localhost:8000/session", {
+        const response = await fetch("http://localhost:5173/api/session", {
           credentials: "include" as const,
         });
 
@@ -280,7 +280,7 @@ function CreateTask() {
 
     async function getUsername() {
       try {
-        const response = await fetch("http://localhost:8000/session_username", {
+        const response = await fetch("http://localhost:5173/api/session_username", {
           credentials: "include" as const,
         });
 

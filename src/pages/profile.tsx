@@ -11,7 +11,7 @@ export default function Profile() {
   useEffect(() => {
     async function checkLoggedIn() {
       try {
-        const response = await fetch("http://localhost:8000/session", {
+        const response = await fetch("http://localhost:5173/api/session", {
           credentials: "include" as const,
         });
 
@@ -36,7 +36,7 @@ export default function Profile() {
     async function getUsername() {
       // gets the username associated with the session
       try {
-        const response = await fetch("http://localhost:8000/session_username", {
+        const response = await fetch("http://localhost:5173/api/session_username", {
           credentials: "include" as const,
         });
 
