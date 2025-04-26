@@ -140,21 +140,17 @@ def create_task(request):
     body_unicode = request.body.decode("utf-8")
     body = json.loads(body_unicode)
 
-    def parse(): # decide whether to assign type as task or meeting
-        pass
+    
 
     name = body["name"]
-    type = body["type"]
-    duration = body["duration"]
+    description = body["description"]
     priority = body["priority"]
     due_date = body["due_date"]
     reminders = body["reminders"]
 
-    format_string = "%Y-%m-%d %H:%M:%S"
+    format_string = "%Y-%m-%d %H:%M"
 
     datetime_object = datetime.strptime(due_date, format_string)
-
-    timedelta_object = timedelta(seconds=duration)
 
     if not name or len(name) == 0:
         return HttpResponse("Name not provided")
@@ -163,8 +159,7 @@ def create_task(request):
         return HttpResponse("Task already exists")
 
     task = Task.objects.create(name=name,
-                               type=type,
-                               duration=timedelta_object,
+                               description=description,
                                priority=priority,
                                due_date=datetime_object,
                                reminders=reminders,
@@ -249,7 +244,7 @@ def update_task(request):
     due_date = body["due_date"]
     reminders = body["reminders"]
 
-    format_string = "%Y-%m-%d %H:%M:%S"
+    format_string = "%Y-%m-%d %H:%M"
 
     datetime_object = datetime.strptime(due_date, format_string)
 

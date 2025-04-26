@@ -25,7 +25,6 @@ function Login() {
         body: JSON.stringify(data),
         credentials: "include" as const,
       };
-      // 4/25 gpt for help
       const response = await fetch(url, options);
 
       if (!response.ok) {

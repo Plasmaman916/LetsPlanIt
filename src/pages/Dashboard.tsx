@@ -9,6 +9,8 @@ function Dashboard() {
   const location = useLocation();
   const [username, setUsername] = useState("");
 
+  const [fetchedTasks, setFetchedTasks] = useState([]);
+
   useEffect(() => {
     async function checkLoggedIn() {
       try {
@@ -53,8 +55,27 @@ function Dashboard() {
       }
     }
 
+    async function getTasks() {
+      try {
+        const response = await fetch("http://localhost:8000/get_all_tasks", {
+          credentials: "include" as const,
+        });
+
+        if (!response.ok) {
+          console.error("An error occurred while fetching tasks");
+        } else {
+          const data = await response.json();
+          console.log(data, "this are the fetched tasks");
+          setFetchedTasks(data);
+        }
+      } catch (error) {
+        console.error(error);
+      }
+    }
+
     checkLoggedIn(); // checking if the user is logged in first and if not then redirect to the login page
     retrieveUsername(); // get the username only after checking if the user is logged in
+    getTasks();
   }, []);
 
   //console.log(username);

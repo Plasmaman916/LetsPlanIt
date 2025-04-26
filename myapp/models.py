@@ -73,10 +73,8 @@ class Task(models.Model):
     )
 
     name = models.CharField(max_length=150)
-    type = models.CharField(max_length=100)
-    duration = models.DurationField()
+    description = models.CharField(max_length=100)
     priority = models.IntegerField()
-    # invitees = models.TextField(blank=True, default="") # invitees should be a many to many relationship
     due_date = models.DateTimeField()
     reminders = models.BooleanField(default=False)
     # completed
@@ -140,8 +138,6 @@ class TaskManager:
             if invitee not in valid_invitees:
                 return "invalid invitees"
 
-        if duration.total_seconds() < 0:
-            return "duration must be positive"
 
         if not type in valid_types:
             return "type of task is not valid"

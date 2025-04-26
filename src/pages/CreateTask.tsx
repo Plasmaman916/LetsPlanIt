@@ -19,18 +19,21 @@ function InviteeTabs({ username }) {
 
 function CreateInputs() {
   // useState
-  const [invitees, setInvitees] = useState<string[]>([]);
+  const [invitees, setInvitees] = useState<string[]>([]); // an array of strings
   const [invitee, setInvitee] = useState<string>("");
   const [unableToFindUser, setUnableToFindUser] = useState<boolean>(false);
   const [userAddedAlready, setUserAddedAlready] = useState<boolean>(false);
 
+  const [ableToCreateTask, setAbleToCreateTask] = useState<boolean>(false);
+  const [unableToCreateTask, setUnableToCreateTask] = useState<boolean>(false);
+
   // other fields for the task
-  const [title, setTitle] = useState<string>();
-  const [description, setDescription] = useState<string>();
-  const [dueDate, setDueDate] = useState<string>();
-  const [dueTime, setDueTime] = useState<string>();
-  const [priority, setPriority] = useState<string>();
-  const [reminders, setReminders] = useState<string>();
+  const [title, setTitle] = useState<string>("");
+  const [description, setDescription] = useState<string>("");
+  const [dueDate, setDueDate] = useState<string>("");
+  const [dueTime, setDueTime] = useState<string>("");
+  const [priority, setPriority] = useState<string>("1");
+  const [reminders, setReminders] = useState<boolean>(false);
 
   async function searchUser() {
     const data = {
@@ -70,6 +73,7 @@ function CreateInputs() {
             // add this user to invitees
             console.log(text);
             setInvitees((prevInvitees) => [...prevInvitees, invitee]);
+
             setUnableToFindUser(false);
             setUserAddedAlready(false);
           }
@@ -80,15 +84,85 @@ function CreateInputs() {
     }
   }
 
-  function validateFields() {}
-  async function createTaskFromInputs() {}
+  // if any of the fields are empty then don't proceed (except invitees and reminders)
+  function validateFields() {
+    // fields to check title, description, dueDate, dueTime, and priority
+    if (
+      title === "" ||
+      description === "" ||
+      dueDate === "" ||
+      dueTime === "" ||
+      priority === ""
+    ) {
+      return false;
+    }
+
+    // else the above 4 are filled
+    return true;
+  }
+  async function createTaskFromInputs(e) {
+    e.preventDefault();
+
+    console.log(validateFields());
+    if (!validateFields()) {
+      console.log("Need to provide a title, description, dueDate, and dueTime");
+    } else {
+      // need to combine dueDate and dueTime
+      const taskDue = dueDate + " " + dueTime;
+      const taskData = {
+        name: title,
+        description,
+        due_date: taskDue,
+        priority: Number(priority),
+        reminders,
+        invitees,
+      };
+      console.log(taskData);
+
+      try {
+        const options = {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify(taskData),
+          credentials: "include" as const,
+        };
+        const response = await fetch(
+          "http://localhost:8000/create_task",
+          options
+        );
+
+        if (!response.ok) {
+          console.error("An error occurred while trying to create the task");
+        } else {
+          const text: string = await response.text();
+
+          if (text === "Task created") {
+            setAbleToCreateTask(true);
+            setUnableToCreateTask(false);
+            console.log("Created Task!");
+          } else {
+            setAbleToCreateTask(false);
+            setUnableToCreateTask(true);
+            console.log("Did not create task", text);
+          }
+        }
+      } catch (error) {
+        console.error(error);
+      }
+    }
+  }
   return (
     <div className="w-110 bg-white rounded-lg shadow-xl/30">
       <div className="font-bungee text-[#47034b] text-5xl py-3 pl-3">
         <span>Create Task</span>
       </div>
 
-      <form className="flex flex-col gap-2">
+      <form
+        className="flex flex-col gap-2 pb-2"
+        onSubmit={createTaskFromInputs}
+      >
         {/*Title Input*/}
         <div className="flex flex-col items-start w-[300px] space-y-1 pl-7">
           <label className="font-bungee text-[#47034b] text-2xl">Title</label>{" "}
@@ -96,6 +170,9 @@ function CreateInputs() {
             type="text"
             placeholder="e.g. SE 3354"
             className="w-95 h-9 bg-[#ddc7c7] rounded-md px-2 border border-gray-300 focus: border-3 focus:border-[#8a048c] outline-none transition-all duration-100 font-sans"
+            onChange={(e) => {
+              setTitle(e.target.value);
+            }}
           />
         </div>
 
@@ -108,6 +185,9 @@ function CreateInputs() {
             type="text"
             placeholder="e.g. HW#1"
             className="w-95 h-9 bg-[#ddc7c7] rounded-md px-2 border border-gray-300 focus: border-3 focus:border-[#8a048c] outline-none transition-all duration-100 font-sans"
+            onChange={(e) => {
+              setDescription(e.target.value);
+            }}
           />
         </div>
 
@@ -175,7 +255,8 @@ function CreateInputs() {
               value=""
               className="sr-only peer"
               onChange={(e) => {
-                console.log(e.target.value);
+                console.log(e.target.checked);
+                setReminders(e.target.checked);
               }}
             />
             <div className="relative w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-3 peer-focus:[#8a048c] dark:peer-focus:ring-blue-800 rounded-full peer dark:bg-gray-700 peer-checked:after:translate-x-full rtl:peer-checked:after:-translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:start-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all dark:border-gray-600 peer-checked:bg-[#8a048c] dark:peer-checked:bg-blue-600"></div>
@@ -235,7 +316,6 @@ function CreateInputs() {
           {/*Submit Button*/}
           <button
             type="submit"
-            onSubmit={() => {}}
             className="group flex items-center justify-around w-24 h-12 bg-[#eaddff] rounded-xl border border-gray-300 focus: border-3 hover:border-[#8a048c] outline-none transition-all duration-100 cursor-pointer"
           >
             <CheckIcon className="h-7 h-3 text-[#47034b] group-hover:text-blue-300" />
@@ -245,6 +325,13 @@ function CreateInputs() {
           </button>
         </div>
       </form>
+      <span className="pl-8 font-bungee text-green-400 text-3xl">
+        {ableToCreateTask ? "Created Task!" : ""}
+      </span>
+      <br />
+      <span className="pl-8 font-bungee text-red-400 text-3xl">
+        {unableToCreateTask ? "Unable to Create Task" : ""}
+      </span>
     </div>
   );
 }
@@ -308,6 +395,7 @@ function CreateTask() {
         <div className="flex justify-center items-center ">
           <CreateInputs />
         </div>
+        <br />
       </div>
     </>
   );
