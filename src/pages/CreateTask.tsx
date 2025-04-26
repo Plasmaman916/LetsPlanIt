@@ -1,4 +1,5 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
 import Navigation from "../components/Navigation";
 import Calendar from "../components/Calendar";
 import UpcomingTasks from "../components/UpcomingTasks";
@@ -21,6 +22,15 @@ function CreateInputs() {
   const [invitees, setInvitees] = useState<string[]>([]);
   const [invitee, setInvitee] = useState<string>("");
   const [unableToFindUser, setUnableToFindUser] = useState<boolean>(false);
+  const [userAddedAlready, setUserAddedAlready] = useState<boolean>(false);
+
+  // other fields for the task
+  const [title, setTitle] = useState<string>();
+  const [description, setDescription] = useState<string>();
+  const [dueDate, setDueDate] = useState<string>();
+  const [dueTime, setDueTime] = useState<string>();
+  const [priority, setPriority] = useState<string>();
+  const [reminders, setReminders] = useState<string>();
 
   async function searchUser() {
     const data = {
@@ -33,33 +43,45 @@ function CreateInputs() {
         "Content-Type": "application/json",
       },
       body: JSON.stringify(data),
+      credentials: "include" as const,
     };
 
-    try {
-      const response = await fetch(url, options);
+    if (invitees.includes(invitee)) {
+      setUserAddedAlready(true);
+    } else {
+      try {
+        const response = await fetch(url, options);
 
-      if (!response.ok) {
-        console.error("An issue occurred while searching for a user");
-        // display 'unable to find username' text
-      } else {
-        const text: string = await response.text();
-
-        if (text === "Could not find user") {
+        if (!response.ok) {
           console.error("An issue occurred while searching for a user");
           // display 'unable to find username' text
+          setUserAddedAlready(false);
           setUnableToFindUser(true);
         } else {
-          // found the username
-          // add this user to invitees
-          console.log(text);
-          setInvitees((prevInvitees) => [...prevInvitees, invitee]);
-          setUnableToFindUser(false);
+          const text: string = await response.text();
+
+          if (text === "Could not find user") {
+            console.error("An issue occurred while searching for a user");
+            // display 'unable to find username' text
+            setUserAddedAlready(false);
+            setUnableToFindUser(true);
+          } else {
+            // found the username
+            // add this user to invitees
+            console.log(text);
+            setInvitees((prevInvitees) => [...prevInvitees, invitee]);
+            setUnableToFindUser(false);
+            setUserAddedAlready(false);
+          }
         }
+      } catch (error) {
+        console.error(error);
       }
-    } catch (error) {
-      console.error(error);
     }
   }
+
+  function validateFields() {}
+  async function createTaskFromInputs() {}
   return (
     <div className="w-110 bg-white rounded-lg shadow-xl/30">
       <div className="font-bungee text-[#47034b] text-5xl py-3 pl-3">
@@ -98,6 +120,10 @@ function CreateInputs() {
               type="date"
               placeholder="MM/DD/YY"
               className="w-42 h-9 bg-[#ddc7c7] rounded-md px-2 border border-gray-300 focus: border-3 focus:border-[#8a048c] outline-none transition-all duration-100 font-sans"
+              onChange={(e) => {
+                console.log(e.target.value);
+                setDueDate(e.target.value);
+              }}
             />
           </div>
 
@@ -107,6 +133,10 @@ function CreateInputs() {
             <input
               type="time"
               className="w-42 h-9 bg-[#ddc7c7] rounded-md px-2 border border-gray-300 focus: border-3 focus:border-[#8a048c] outline-none transition-all duration-100 font-sans"
+              onChange={(e) => {
+                console.log(e.target.value);
+                setDueTime(e.target.value);
+              }}
             />
           </div>
         </div>
@@ -120,6 +150,10 @@ function CreateInputs() {
             name="priority"
             id="priority"
             className="w-full h-9 bg-[#ddc7c7] rounded-md border border-gray-300 focus: border-3 focus:border-[#8a048c] outline-none transition-all duration-100 font-sans"
+            onChange={(e) => {
+              console.log(e.target.value);
+              setPriority(e.target.value);
+            }}
           >
             <option value="1">1 (highest)</option>
             <option value="2">2</option>
@@ -136,7 +170,14 @@ function CreateInputs() {
           </label>
 
           <label className="inline-flex items-center cursor-pointer pt-1">
-            <input type="checkbox" value="" className="sr-only peer" />
+            <input
+              type="checkbox"
+              value=""
+              className="sr-only peer"
+              onChange={(e) => {
+                console.log(e.target.value);
+              }}
+            />
             <div className="relative w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-3 peer-focus:[#8a048c] dark:peer-focus:ring-blue-800 rounded-full peer dark:bg-gray-700 peer-checked:after:translate-x-full rtl:peer-checked:after:-translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:start-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all dark:border-gray-600 peer-checked:bg-[#8a048c] dark:peer-checked:bg-blue-600"></div>
           </label>
         </div>
@@ -170,6 +211,14 @@ function CreateInputs() {
           </div>
         </div>
 
+        <span className="pl-7 text-red-400">
+          {userAddedAlready
+            ? "User added already!"
+            : unableToFindUser
+            ? "Couldn't find user!"
+            : ""}
+        </span>
+
         {/*Clear and Submit Buttons*/}
         <div className="w-full flex items-center justify-between px-7 pt-3">
           {/*Clear Button*/}
@@ -201,27 +250,59 @@ function CreateInputs() {
 }
 
 function CreateTask() {
-  async function test() {
-    try {
-      const response = await fetch("http://localhost:8000/session");
+  const navigate = useNavigate();
+  const [username, setUsername] = useState<string>();
 
-      if (!response.ok) {
-        console.error("An error ocurred");
-      } else {
-        const text: string = await response.text();
-        console.log(text);
+  useEffect(() => {
+    async function checkLoggedIn() {
+      try {
+        const response = await fetch("http://localhost:8000/session", {
+          credentials: "include" as const,
+        });
+
+        if (!response.ok) {
+          console.error(
+            "An error occurred while trying to check if the user was logged in"
+          );
+        } else {
+          const text: string = await response.text();
+          console.log(text, "this is the text after typing /dashboard");
+          if (text === "the session does not have the user id") {
+            // user is not logged in
+            setUsername("");
+            navigate("/", { replace: true });
+          }
+        }
+      } catch (error) {
+        console.error(error);
       }
-    } catch (error) {
-      console.error(error);
     }
-  }
 
-  test();
+    async function getUsername() {
+      try {
+        const response = await fetch("http://localhost:8000/session_username", {
+          credentials: "include" as const,
+        });
+
+        if (!response.ok) {
+          console.error("An error occurred");
+        } else {
+          const data = await response.json();
+          setUsername(data.username);
+        }
+      } catch (error) {
+        console.error(error);
+      }
+    }
+
+    checkLoggedIn();
+    getUsername();
+  }, []);
 
   return (
     <>
       <div className="bg-[#d3d3d3] relative min-h-screen ">
-        <Navigation />
+        <Navigation username={username} />
         <br />
         <br />
         <div className="flex justify-center items-center ">

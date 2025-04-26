@@ -12,5 +12,6 @@ urlpatterns = [
     path("get_task", views.get_task, name="get_task"),
     path("update_task", views.update_task, name="update_task"),
     path("search_user", views.search_user, name="search_user"),
-    path("session", views.session, name="session")
+    path("session", views.session, name="session"),
+    path("session_username", views.session_username, name="session_username")
 ]

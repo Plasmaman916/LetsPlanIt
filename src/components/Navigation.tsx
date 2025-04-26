@@ -7,7 +7,9 @@ function Navigation({ username }) {
     const url = "http://localhost:8000/logout";
 
     try {
-      const response = await fetch(url);
+      const response = await fetch(url, {
+        credentials: "include" as const,
+      });
 
       if (!response.ok) {
         console.error("An error occurred while trying to logout");
@@ -16,6 +18,7 @@ function Navigation({ username }) {
         const text = await response.text();
         if (text === "Logged out") {
           // logout
+
           redirectToRoot();
         } else {
           // this should not executed
@@ -31,15 +34,10 @@ function Navigation({ username }) {
     navigate("/", { replace: true });
   };
 
-  // 4/23 okay well username is fucking empty for some reason
   const navigateToDashboard = (e: any) => {
     e.preventDefault();
     console.log(username, "this is the username");
-    navigate("/dashboard", {
-      state: {
-        username: username,
-      },
-    });
+    navigate("/dashboard");
   };
 
   return (

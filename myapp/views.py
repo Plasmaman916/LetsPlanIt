@@ -3,6 +3,7 @@ from datetime import datetime, timedelta
 from django.contrib.auth import authenticate
 from django.core import serializers
 from django.shortcuts import render, HttpResponse
+from django.http import JsonResponse
 
 from myapp.models import User, Task
 import json
@@ -52,19 +53,33 @@ def login(request):
 
     if user is not None:
         request.session["user_id"] = user.id
-        print(request.session["user_id"])
+        request.session["username"] = user.username
+        print(request.session["user_id"], " this is the id")
+        print(request.session["username"], " this is the username")
         return HttpResponse("Login successful")
     else:
         return HttpResponse("Invalid login")
     
-# 4/23 django gpt answer + watch vid on django session
-# temp, delete
+
 def session(request):
-    if not request.session.get("user_id"):
+    if not request.session.get("user_id"): # this means that the user is not logged in
         return HttpResponse("the session does not have the user id")
     
+    print("The session has a user id")
     id = request.session.get("user_id")
     return HttpResponse(f"The session has the user id of {id}")
+
+# returns the username associated with the session
+def session_username(request):
+    if not request.session.get("user_id"):
+        return JsonResponse({"message": "error"})
+    
+    if not request.session.get("username"):
+        return JsonResponse({"message": "error"})
+    
+    # username should be stored in the session
+    username = request.session.get("username")
+    return JsonResponse({"username": username})
 
 def search_user(request):
     if request.method != "POST":
@@ -259,4 +274,6 @@ def update_task(request):
 
 def logout(request):
     request.session.flush()
+    print(request.session.get("user_id"), " this is the user id")
+    print(request.session.get("username"), " this is the username")
     return HttpResponse("Logged out")

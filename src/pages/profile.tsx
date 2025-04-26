@@ -1,13 +1,63 @@
 "use client";
-
+import { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
 
 import Navigation from "../components/Navigation";
 
 export default function Profile() {
+  const navigate = useNavigate();
+  const [username, setUsername] = useState<string>();
+
+  useEffect(() => {
+    async function checkLoggedIn() {
+      try {
+        const response = await fetch("http://localhost:8000/session", {
+          credentials: "include" as const,
+        });
+
+        if (!response.ok) {
+          console.error(
+            "An error occurred while trying to check if the user was logged in"
+          );
+        } else {
+          const text: string = await response.text();
+          console.log(text, "this is the text after typing /dashboard");
+          if (text === "the session does not have the user id") {
+            // user is not logged in
+            setUsername("");
+            navigate("/", { replace: true });
+          }
+        }
+      } catch (error) {
+        console.error(error);
+      }
+    }
+
+    async function getUsername() {
+      // gets the username associated with the session
+      try {
+        const response = await fetch("http://localhost:8000/session_username", {
+          credentials: "include" as const,
+        });
+
+        if (!response.ok) {
+          console.error("An error occurred");
+        } else {
+          const data = await response.json();
+          setUsername(data.username);
+        }
+      } catch (error) {
+        console.error(error);
+      }
+    }
+
+    checkLoggedIn();
+    getUsername();
+  }, []);
+
   return (
     <div className="min-h-screen bg-[#d3d3d3] font-sans">
-      
-      <Navigation />
+      <Navigation username={username} />
 
       <div className="max-w-3xl mx-auto py-10 px-6">
         <h1 className="text-4xl font-bold text-center text-[#4A4458] mb-8">

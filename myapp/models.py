@@ -32,10 +32,16 @@ class AccountManager:
 
     def create_account(self, username: str, password: str):
         # create a new user and saved to the database automatically
+        
+        if len(username) < 5 or len(username) > 15:
+            return "Username is not valid"
+
         user = User.objects.create_user(
             username=username,
             password=password
         )
+
+        return "Successfully created user"
     
     def check_login(self, username: str, password: str):
         try: 
@@ -74,6 +80,8 @@ class Task(models.Model):
     # invitees = models.TextField(blank=True, default="") # invitees should be a many to many relationship
     due_date = models.DateTimeField()
     reminders = models.BooleanField(default=False)
+    # completed
+    completed = models.BooleanField(default=False)
 
     # many to many for invited users
     invitees = models.ManyToManyField(

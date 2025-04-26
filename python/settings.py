@@ -55,9 +55,14 @@ MIDDLEWARE = [
 ]
 
 CORS_ORIGIN_ALLOW_ALL = False
+CORS_ALLOW_CREDENTIALS = True
 CORS_ORIGIN_WHITELIST = [
     'http://localhost:5173',
 ]
+
+# Required to allow cross-origin cookies
+SESSION_COOKIE_SAMESITE = "Lax"  # or "None" if using HTTPS
+SESSION_COOKIE_SECURE = False    # should be True in production over HTTPS
 
 ROOT_URLCONF = 'python.urls'
 

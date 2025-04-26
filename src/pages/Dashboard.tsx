@@ -10,32 +10,54 @@ function Dashboard() {
   const [username, setUsername] = useState("");
 
   useEffect(() => {
-    if (!location.state) {
-      // redirect to login if there is no username
-      navigate("/", { replace: true });
-    } else {
-      setUsername(location.state.username);
-    }
-
-    async function test() {
+    async function checkLoggedIn() {
       try {
-        const response = await fetch("http://localhost:8000/session");
+        const response = await fetch("http://localhost:8000/session", {
+          credentials: "include" as const,
+        });
 
         if (!response.ok) {
-          console.error("An error ocurred");
+          console.error(
+            "An error occurred while trying to check if the user was logged in"
+          );
         } else {
           const text: string = await response.text();
-          console.log(text);
+          console.log(text, "this is the text after typing /dashboard");
+          if (text === "the session does not have the user id") {
+            // user is not logged in
+            setUsername("");
+            navigate("/", { replace: true });
+          }
         }
       } catch (error) {
         console.error(error);
       }
     }
 
-    test();
+    async function retrieveUsername() {
+      try {
+        const response = await fetch("http://localhost:8000/session_username", {
+          credentials: "include" as const,
+        });
+
+        if (!response.ok) {
+          console.error(
+            "An error occurred while trying to retrieve the username"
+          );
+        } else {
+          const data = await response.json();
+          setUsername(data.username);
+        }
+      } catch (error) {
+        console.error(error);
+      }
+    }
+
+    checkLoggedIn(); // checking if the user is logged in first and if not then redirect to the login page
+    retrieveUsername(); // get the username only after checking if the user is logged in
   }, []);
 
-  console.log(username);
+  //console.log(username);
   return (
     <>
       <div className="bg-[#d3d3d3] relative">
