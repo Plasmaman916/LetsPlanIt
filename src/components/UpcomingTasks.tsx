@@ -65,9 +65,12 @@ function UpcomingTasks() {
   useEffect(() => {
     async function fetchTasks() {
       try {
-        const response = await fetch("http://localhost:8000/get_all_tasks", {
-          credentials: "include" as const,
-        });
+        const response = await fetch(
+          "http://localhost:5173/api/get_all_tasks",
+          {
+            credentials: "include" as const,
+          }
+        );
 
         if (!response.ok) {
           console.error(

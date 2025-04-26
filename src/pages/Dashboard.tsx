@@ -38,9 +38,12 @@ function Dashboard() {
 
     async function retrieveUsername() {
       try {
-        const response = await fetch("http://localhost:5173/api/session_username", {
-          credentials: "include" as const,
-        });
+        const response = await fetch(
+          "http://localhost:5173/api/session_username",
+          {
+            credentials: "include" as const,
+          }
+        );
 
         if (!response.ok) {
           console.error(
@@ -57,9 +60,12 @@ function Dashboard() {
 
     async function getTasks() {
       try {
-        const response = await fetch("http://localhost:8000/get_all_tasks", {
-          credentials: "include" as const,
-        });
+        const response = await fetch(
+          "http://localhost:5173/api/get_all_tasks",
+          {
+            credentials: "include" as const,
+          }
+        );
 
         if (!response.ok) {
           console.error("An error occurred while fetching tasks");
