@@ -4,7 +4,6 @@ from django.contrib.auth.hashers import check_password
 from django.conf import settings
 from datetime import timedelta
 from datetime import datetime
-from typing import List
 import re
 
 CONTROL_CHAR_PATTERN = re.compile(r"[\x00-\x1F\x7F]")

@@ -2,7 +2,6 @@ from django.urls import path
 from . import views
 
 urlpatterns = [
-    path("", views.home, name="home"),
     path("register", views.register, name="register"),
     path("login", views.login, name="login"),
     path("logout", views.logout, name="logout"),
@@ -13,5 +12,7 @@ urlpatterns = [
     path("update_task", views.update_task, name="update_task"),
     path("search_user", views.search_user, name="search_user"),
     path("session", views.session, name="session"),
-    path("session_username", views.session_username, name="session_username")
+    path("session_username", views.session_username, name="session_username"),
+    path("get_user_data", views.get_user_data, name="get_user_data"),
+    path("send_new_password", views.send_new_password, name="send_new_password"),
 ]

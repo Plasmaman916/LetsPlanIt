@@ -2,15 +2,12 @@ from datetime import datetime, timedelta
 
 from django.contrib.auth import authenticate
 from django.core import serializers
+from django.core.mail import send_mail
 from django.shortcuts import render, HttpResponse
 from django.http import JsonResponse
 
 from myapp.models import User, Task
 import json
-
-# Create your views here.
-def home(request):
-    return HttpResponse("hello world")
 
 def register(request):
     if request.method != "POST":
@@ -116,14 +113,16 @@ def update_user(request):
     body_unicode = request.body.decode("utf-8")
     body = json.loads(body_unicode)
 
-    password = body["password"]
+    if 'password' in body:
+        password = body["password"]
+        curr_usr.set_password(password)
+    if 'email' in body:
+        email = body["email"]
+        if email and email != "":
+            curr_usr.email = email
 
-    if not password:
-        return HttpResponse("Password not provided")
-
-    curr_usr.set_password(password)
     curr_usr.save()
-    return HttpResponse("Password updated")
+    return HttpResponse("User updated")
 
 
 # invitees will be received as a list of strings (usernames) which will then all be invited to the task
@@ -271,6 +270,49 @@ def update_task(request):
     user_task.save()
 
     return HttpResponse("Task updated")
+
+
+def get_user_data(request):
+    if request.method != "GET":
+        return HttpResponse("Invalid request")
+
+    if not request.session.get("user_id"):
+        return HttpResponse("User not logged in")
+
+    curr_usr = User.objects.get(id=request.session.get("user_id"))
+    if not curr_usr:
+        return HttpResponse("User not found")
+
+    return HttpResponse(serializers.serialize('json',[curr_usr]), content_type="application/json")
+
+
+
+def send_new_password(request):
+    if request.method != "POST":
+        return HttpResponse("Invalid request")
+
+    if not request.session.get("user_id"):
+        return HttpResponse("User not logged in")
+
+    curr_usr = User.objects.get(id=request.session.get("user_id"))
+    if not curr_usr:
+        return HttpResponse("User not found")
+
+    password = ""
+
+    if curr_usr.email and curr_usr.email != "":
+        password = User.objects.make_random_password()
+        curr_usr.set_password(password)
+        curr_usr.save()
+    else:
+        return HttpResponse("No associated email address")
+
+    send_mail("Password Reset",
+              "Your new password is "+password,
+              "letsplanit@dynamicstudios.io", [curr_usr.email], fail_silently=False)
+
+    return HttpResponse("Password reset email sent")
+
 
 def logout(request):
     request.session.flush()
