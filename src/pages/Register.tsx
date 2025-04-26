@@ -1,144 +1,136 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
+import { toast } from "sonner";
 
 function Register() {
   const navigate = useNavigate();
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
-
+  const [isLoading, setIsLoading] = useState(false);
   const [errorMessage, setErrorMessage] = useState("");
 
-  const onSubmit = async (e: any) => {
+  const onSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    setErrorMessage("");
 
-    // first check if password and confirmPassword match
     if (password !== confirmPassword) {
       setErrorMessage("You must confirm your password correctly");
       return;
     }
 
-    const data = {
-      username,
-      password,
-    };
+    setIsLoading(true);
+    const toastId = toast.loading("Registering...");
 
     try {
-      const url = "http://localhost:5173/api/register";
-      const options = {
+      const response = await fetch("http://localhost:5173/api/register", {
         method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify(data),
-      };
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ username, password }),
+      });
 
-      const response = await fetch(url, options);
+      const text = await response.text();
 
-      if (!response.ok) {
-        console.error("There was an error sending the request");
+      if (response.ok && text.startsWith("Created new user")) {
+        await fetch("http://localhost:5173/api/login", {
+          method: "POST",
+          credentials: "include",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ username, password }),
+        });
+
+        toast.success("Successfully registered and logged in!", { id: toastId });
+
+        setTimeout(() => {
+          navigate("/dashboard", { state: { username } });
+        }, 1500);
+      } else if (text === "User already exists") {
+        setErrorMessage(text);
+        toast.error("User already exists", { id: toastId });
       } else {
-        const text: string = await response.text();
-        console.log(text);
-        if (text === "User already exists") {
-          setErrorMessage(text);
-          console.log(text);
-        } else if (text === `Created new user:  ${username}`) {
-          console.log(text);
-          redirectToDashboard();
-        }
+        toast.error("Registration failed", { id: toastId });
       }
     } catch (error) {
-      console.error("There was an error sending the request");
+      toast.error("Unexpected error!", { id: toastId });
+    } finally {
+      setIsLoading(false);
     }
   };
 
-  const redirectToDashboard = () => {
-    // after successfully registering
-    navigate("/dashboard", {
-      state: {
-        username: username,
-      },
-    });
-  };
-
   return (
-    <>
-      <div className="flex min-h-screen">
-        <div className="flex justify-center items-center w-5/9 bg-[#4A4458]">
-          <h1 className="font-bungee text-white font-bold font-BungeeInline text-8xl">
-            Lets Plan It
-          </h1>
-        </div>
+    <div className="flex min-h-screen">
+      {/* Left */}
+      <div className="w-1/2 bg-[#4A4458] flex items-center justify-center">
+        <h1 className="font-bungee text-white font-bold text-8xl">Lets Plan It</h1>
+      </div>
 
-        {/* Right Half */}
-        <div className="flex flex-col justify-center items-center w-4/9 bg-[#D9D9D9]">
-          <div>
-            <h1 className="font-bungee font-bold text-5xl">Register</h1>
-          </div>
+      {/* Right */}
+      <div className="w-1/2 bg-[#D9D9D9] flex items-center justify-center">
+        <div className="flex flex-col items-center justify-center gap-6">
+          <h1 className="font-bungee font-bold text-5xl">Register</h1>
 
-          <form className="flex flex-col items-center pt-6" onSubmit={onSubmit}>
-            <div className="flex">
-              <img
-                src="/user.png"
-                width="48px"
-                className="mr-4 max-lg:hidden"
-              />
+          <form className="flex flex-col items-center gap-4" onSubmit={onSubmit}>
+            {/* Username */}
+            <div className="flex items-center gap-3">
+              <img src="/user.png" alt="user" width="32" />
               <input
                 type="text"
                 placeholder="Enter Username"
                 required
-                onChange={(e) => {
-                  setUsername(e.target.value);
-                }}
-                className="text-2xl w-75 h-13 rounded-md bg-white placeholder: pl-2 text-gray-500 border border-gray-300 focus: border-3 focus:border-[#8a048c] outline-none transition-all duration-300"
+                value={username}
+                onChange={(e) => setUsername(e.target.value)}
+                className="text-xl w-[300px] h-12 rounded-md bg-white px-3 text-gray-700 border border-gray-300 focus:outline-none focus:ring-2 focus:ring-[#8a048c]"
               />
             </div>
 
-            <br />
-            <div className="flex pl-17">
+            {/* Password */}
+            <div className="flex items-center gap-3">
+              <img src="/lock.png" alt="lock" width="32" />
               <input
                 type="password"
                 placeholder="Enter Password"
                 required
-                onChange={(e) => {
-                  setPassword(e.target.value);
-                }}
-                className="text-2xl w-75 h-13 rounded-md bg-white placeholder: pl-2 text-gray-500 border border-gray-300 focus: border-3 focus:border-[#8a048c] outline-none transition-all duration-300"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                className="text-xl w-[300px] h-12 rounded-md bg-white px-3 text-gray-700 border border-gray-300 focus:outline-none focus:ring-2 focus:ring-[#8a048c]"
               />
             </div>
 
-            <div className="pt-3 pl-17">
+            {/* Confirm Password */}
+            <div className="flex items-center gap-3">
+              <img src="/lock.png" alt="lock" width="32" />
               <input
                 type="password"
                 placeholder="Confirm Password"
                 required
-                onChange={(e) => {
-                  setConfirmPassword(e.target.value);
-                }}
-                className="text-2xl w-75 h-13 rounded-md bg-white placeholder: pl-2 text-gray-500 border border-gray-300 focus: border-3 focus:border-[#8a048c] outline-none transition-all duration-300"
+                value={confirmPassword}
+                onChange={(e) => setConfirmPassword(e.target.value)}
+                className="text-xl w-[300px] h-12 rounded-md bg-white px-3 text-gray-700 border border-gray-300 focus:outline-none focus:ring-2 focus:ring-[#8a048c]"
               />
             </div>
 
-            <br />
-            {/*Style Login Button */}
+            {/* Button */}
             <button
               type="submit"
-              className="w-37 h-13 rounded-lg bg-[#8a048c] border-2 hover:bg-[#e002e3] active:bg-[#ee8bdf] transition-all duration-200 cursor-pointer"
+              disabled={isLoading}
+              className="w-[200px] h-12 rounded-md bg-[#8a048c] text-white font-bold hover:bg-[#e002e3] active:bg-[#ee8bdf] transition-all duration-300"
             >
-              <span className="font-bold font-bungee text-2xl">REGISTER </span>
+              {isLoading ? "Registering..." : "REGISTER"}
             </button>
           </form>
 
-          <span className="font-calistoga text-[#47034B] pt-3">
+          {/* Error */}
+          {errorMessage && (
+            <p className="text-red-600 text-center font-semibold">{errorMessage}</p>
+          )}
+
+          {/* Link */}
+          <p className="font-calistoga text-[#47034B] pt-2">
             <a href="/">Already have an account? Login</a>
-          </span>
-          <br />
-          <span className="font-calistoga text-red-500">{errorMessage}</span>
-          <br />
+          </p>
         </div>
       </div>
-    </>
+    </div>
   );
 }
 
