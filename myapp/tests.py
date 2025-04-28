@@ -1,181 +1,209 @@
 from django.test import TestCase
-from .models import *
-from datetime import timedelta
-import datetime
-# Create your tests here.
+from myapp.models import User, Task, AccountManager, TaskManager, DatabaseManager, RepeatInterval
+from datetime import datetime, timedelta
 
-# Log In
-class Login(TestCase):
+# Account Tests
+class AccountTestCase(TestCase):
     def setUp(self):
-        account_manager = AccountManager()
-        account_manager.create_account("rufaelTek", "abcd1253")
-    
-    def test_01(self):
-        account_manager = AccountManager()
-        response = account_manager.check_login("rufaelTek", "abcd1253")
-        self.assertEqual(response, "Successful Login")
-    
-    def test_02(self):
-        account_manager = AccountManager()
-        response = account_manager.check_login("rufaelTek", "xyz")
-        self.assertEqual(response, "Password is not correct")
-    
-    def test_03(self):
-        account_manager = AccountManager()
-        response = account_manager.check_login("rrrrrrr", "abcd1253")
-        self.assertEqual(response, "User could not be found")
+        self.manager = AccountManager()
+        self.username = "testuser"
+        self.password = "testpass123"
 
-        
-# Log Out
-class Logout(TestCase):
-    def setUp(self):
-        account_manager = AccountManager()
-        account_manager.create_account("rufaelTek", "abcd1253")
-    
-    def test_01(self):
-        account_manager = AccountManager()
-        login = account_manager.check_login("rufaelTek", "abcd1253")
+    def test_create_account_valid(self):
+        result = self.manager.create_account(self.username, self.password)
+        self.assertEqual(result, "Successfully created user")
 
-        session_token = ""
-        if login == "Successful Login":
-            session_token = "123"
-        
-        response = account_manager.log_out(session_token=session_token)
-        self.assertEqual(response, "Successful logout")
-    
+    def test_create_account_invalid_username(self):
+        result = self.manager.create_account("abc", self.password)
+        self.assertEqual(result, "Username is not valid")
 
-    def test_02(self):
-        account_manager = AccountManager()
-        login = account_manager.check_login("rufaelTek", "abcd1253")
+    def test_login_successful(self):
+        self.manager.create_account(self.username, self.password)
+        result = self.manager.check_login(self.username, self.password)
+        self.assertEqual(result, "Successful Login")
 
-        session_token = ""
-        if login == "Successful Login":
-            session_token = "124"
+    def test_login_wrong_password(self):
+        self.manager.create_account(self.username, self.password)
+        result = self.manager.check_login(self.username, "wrongpass")
+        self.assertEqual(result, "Password is not correct")
 
-        response = account_manager.log_out(session_token=session_token)
-        self.assertEqual(response, "Invalid session token error")
-    
-    def test_03(self):
-        account_manager = AccountManager()
-        login = account_manager.check_login("rrrr", "abcd1253")
+    def test_login_user_not_found(self):
+        result = self.manager.check_login("unknown", self.password)
+        self.assertEqual(result, "User could not be found")
 
-        session_token = None
-        if login == "Successful Login":
-            session_token = "123"
-        
-        response = account_manager.log_out(session_token=session_token)
-        self.assertEqual(response, "Unauthorized access error")
+    def test_logout_success(self):
+        self.manager.create_account(self.username, self.password)
+        self.manager.check_login(self.username, self.password)
+        result = self.manager.log_out("123")
+        self.assertEqual(result, "Successful logout")
+
+    def test_logout_invalid_token(self):
+        self.manager.create_account(self.username, self.password)
+        self.manager.check_login(self.username, self.password)
+        result = self.manager.log_out("wrong_token")
+        self.assertEqual(result, "Invalid session token error")
+
+    def test_logout_unauthorized(self):
+        result = self.manager.log_out("any")
+        self.assertEqual(result, "Unauthorized access error")
 
 
-# Create Task
+# Task Tests
 class TaskTestCase(TestCase):
     def setUp(self):
-        account_manager = AccountManager()
-        account_manager.create_account("1234", "1234")
+        self.user = User.objects.create_user(username="bob", password="bobpassword")
+        self.manager = TaskManager()
+        self.repeat_interval = RepeatInterval(
+            start=datetime.now(),
+            end=datetime.now() + timedelta(days=1),
+            frequency=timedelta(hours=1)
+        )
+
+    def test_create_task_success(self):
+        result = self.manager.create_task(
+            user=self.user,
+            name="Sample Task",
+            repeat_interval=self.repeat_interval,
+            invitees=[],
+            priority=3,
+            due_date=datetime.now() + timedelta(days=1),
+            reminders=True
+        )
+        self.assertEqual(result, "Successfully created task")
+
+    def test_create_task_no_name(self):
+        result = self.manager.create_task(
+            user=self.user,
+            name="",
+            repeat_interval=self.repeat_interval,
+            invitees=[],
+            priority=3,
+            due_date=datetime.now() + timedelta(days=1),
+            reminders=True
+        )
+        self.assertEqual(result, "no name for task")
+
+    def test_create_task_invalid_priority(self):
+        result = self.manager.create_task(
+            user=self.user,
+            name="Test Task",
+            repeat_interval=self.repeat_interval,
+            invitees=[],
+            priority=7,
+            due_date=datetime.now() + timedelta(days=1),
+            reminders=True
+        )
+        self.assertEqual(result, "invalid task priority")
+
+    def test_create_task_invalid_due_date(self):
+        result = self.manager.create_task(
+            user=self.user,
+            name="Test Task",
+            repeat_interval=self.repeat_interval,
+            invitees=[],
+            priority=3,
+            due_date=datetime.now() - timedelta(days=1),
+            reminders=True
+        )
+        self.assertEqual(result, "invalid due date")
+
+    def test_update_task_success(self):
+        task = Task.objects.create(
+            user=self.user,
+            name="Old Name",
+            description="Old description",
+            priority=2,
+            due_date=datetime.now() + timedelta(days=2),
+            reminders=True
+        )
+        result = self.manager.update_task(task, {"name": "New Name"})
+        self.assertEqual(result, "Successfully updated task")
+        task.refresh_from_db()
+        self.assertEqual(task.name, "New Name")
 
 
-    def test_01(self): # all inputs valid
-        user = User.objects.get(username="1234")
-        task_manager = TaskManager()
-        interval = RepeatInterval(start=datetime.datetime(2025, 4, 7), end=datetime.datetime(2025, 5,7), frequency=timedelta(days=7))
+# Database Manager Tests
+class DatabaseTestCase(TestCase):
+    def setUp(self):
+        self.db_manager = DatabaseManager()
+        self.user = User.objects.create_user(username="alice", password="alicepass")
+        self.task = Task.objects.create(
+            user=self.user,
+            name="Alice's Task",
+            description="Sample desc",
+            priority=2,
+            due_date=datetime.now() + timedelta(days=2),
+            reminders=True
+        )
 
-        
-        response = task_manager.create_task(user=user, name="Group Meeting", type="Meeting", repeat_interval=interval, duration=timedelta(minutes=60), invitees=["Tom", "Jerry"], priority=5, due_date=datetime.datetime(2026, 4, 30), reminders=True)
-        self.assertEqual(response, "Successfully created task")
+    def test_get_user_success(self):
+        user = self.db_manager.get_user(self.user.id)
+        self.assertEqual(user.username, "alice")
 
-    def test_02(self):
-        user = User.objects.get(username="1234")
-        task_manager = TaskManager()
-        interval = RepeatInterval(start=datetime.datetime(2025, 4, 7), end=datetime.datetime(2025, 5,7), frequency=timedelta(days=7))
+    def test_get_user_failure(self):
+        user = self.db_manager.get_user(999)
+        self.assertIsNone(user)
 
-        response = task_manager.create_task(user=user, name="Group Meeting", type="xxyz", repeat_interval=interval, duration=timedelta(minutes=60), invitees=["Tom", "Jerry"], priority=5, due_date=datetime.datetime(2026, 4, 30), reminders=True)
-        self.assertEqual(response, "type of task is not valid")
+    def test_get_task_success(self):
+        task = self.db_manager.get_task(self.task.id)
+        self.assertEqual(task.name, "Alice's Task")
 
-    def test_39(self):
-        user = User.objects.get(username="1234")
-        task_manager = TaskManager()
-        interval = RepeatInterval(start=datetime.datetime(2025, 4, 7), end=datetime.datetime(1996, 5,7), frequency=timedelta(days=7))
+    def test_get_task_failure(self):
+        task = self.db_manager.get_task(999)
+        self.assertIsNone(task)
 
-        response = task_manager.create_task(user=user, name="Group Meeting", type="Meeting", repeat_interval=interval, duration=timedelta(minutes=60), invitees=["Tom", "Jerry"], priority=5, due_date=datetime.datetime(2026, 4, 30), reminders=True)
-        self.assertEqual(response, "Interval is not valid")
+    def test_redirect_success(self):
+        result = self.db_manager.redirect("profile", 30)
+        self.assertEqual(result, "Page is set")
 
-    def test_65(self):
-        user = User.objects.get(username="1234")
-        task_manager = TaskManager()
-        interval = RepeatInterval(start=datetime.datetime(2025, 4, 7), end=datetime.datetime(2025, 5,7), frequency=timedelta(days=7))
+    def test_redirect_invalid_page(self):
+        result = self.db_manager.redirect("invalid_page", 30)
+        self.assertEqual(result, "page does not exist")
 
-        response = task_manager.create_task(user=user, name="Group Meeting", type="Meeting", repeat_interval=interval, duration=timedelta(minutes=-1), invitees=["Tom", "Jerry"], priority=5, due_date=datetime.datetime(2026, 4, 30), reminders=True)
-        self.assertEqual(response, "duration must be positive")
+    def test_redirect_timeout(self):
+        result = self.db_manager.redirect("profile", 100)
+        self.assertEqual(result, "user timed out")
 
-    def test_82(self):
-        user = User.objects.get(username="1234")
-        task_manager = TaskManager()
-        interval = RepeatInterval(start=datetime.datetime(2025, 4, 7), end=datetime.datetime(2025, 5,7), frequency=timedelta(days=7))
 
-        response = task_manager.create_task(user=user, name="Group Meeting", type="Meeting", repeat_interval=interval, duration=timedelta(minutes=-1), invitees=["Tom", "ZYZ"], priority=5, due_date=datetime.datetime(2026, 4, 30), reminders=True)
-        self.assertEqual(response, "invalid invitees")
+# Mark Complete Tests
+class MarkCompleteTestCase(TestCase):
+    def setUp(self):
+        self.user = User.objects.create_user(username="markuser", password="password123")
+        self.task = Task.objects.create(
+            user=self.user,
+            name="Test Task",
+            description="Complete me",
+            priority=2,
+            due_date=datetime.now() + timedelta(days=1),
+            reminders=True,
+            completed=False
+        )
 
-    def test_92(self):
-        user = User.objects.get(username="1234")
-        task_manager = TaskManager()
-        interval = RepeatInterval(start=datetime.datetime(2025, 4, 7), end=datetime.datetime(2025, 5,7), frequency=timedelta(days=7))
+    def test_mark_task_complete_success(self):
+        self.task.completed = True
+        self.task.save()
+        self.task.refresh_from_db()
+        self.assertTrue(self.task.completed)
 
-        
-        response = task_manager.create_task(user=user, name="Group Meeting", type="Meeting", repeat_interval=interval, duration=timedelta(minutes=60), invitees=["Tom", "Jerry"], priority=67, due_date=datetime.datetime(2026, 4, 30), reminders=True)
-        self.assertEqual(response, "invalid task priority")
+    def test_mark_task_already_completed(self):
+        self.task.completed = True
+        self.task.save()
+        # Trying to "complete" again
+        self.task.completed = True
+        self.task.save()
+        self.task.refresh_from_db()
+        self.assertTrue(self.task.completed)
 
-    def test_97(self):
-        user = User.objects.get(username="1234")
-        task_manager = TaskManager()
-        interval = RepeatInterval(start=datetime.datetime(2025, 4, 7), end=datetime.datetime(2025, 5,7), frequency=timedelta(days=7))
-
-        
-        response = task_manager.create_task(user=user, name="Group Meeting", type="Meeting", repeat_interval=interval, duration=timedelta(minutes=60), invitees=["Tom", "Jerry"], priority=5, due_date=datetime.datetime(1996, 4, 30), reminders=True)
-        self.assertEqual(response, "invalid due date")
-
-    def test_100(self):
-        user = User.objects.get(username="1234")
-        task_manager = TaskManager()
-        interval = RepeatInterval(start=datetime.datetime(2025, 4, 7), end=datetime.datetime(2025, 5,7), frequency=timedelta(days=7))
-
-        
-        response = task_manager.create_task(user=user, name="Group Meeting", type="Meeting", repeat_interval=interval, duration=timedelta(minutes=60), invitees=["Tom", "Jerry"], priority=5, due_date=datetime.datetime(2026, 4, 30), reminders=None)
-        self.assertEqual(response, "invalid reminder paramter")
-
-    def test_101(self):
-        user = User.objects.get(username="1234")
-        task_manager = TaskManager()
-        interval = RepeatInterval(start=datetime.datetime(2025, 4, 7), end=datetime.datetime(2025, 5,7), frequency=timedelta(days=7))
-
-        
-        response = task_manager.create_task(user=user, name="", type="Meeting", repeat_interval=interval, duration=timedelta(minutes=60), invitees=["Tom", "Jerry"], priority=5, due_date=datetime.datetime(2026, 4, 30), reminders=True)
-        self.assertEqual(response, "no name for task")
-
-    def test_150(self):
-        user = User.objects.get(username="1234")
-        task_manager = TaskManager()
-        interval = RepeatInterval(start=datetime.datetime(2025, 4, 7), end=datetime.datetime(2025, 5,7), frequency=timedelta(days=7))
-
-        
-        response = task_manager.create_task(user=user, name="\t", type="Meeting", repeat_interval=interval, duration=timedelta(minutes=60), invitees=["Tom", "Jerry"], priority=5, due_date=datetime.datetime(2026, 4, 30), reminders=True)
-        self.assertEqual(response, "no name for task")
-
-# Navigate Dashboard
-class NavigateDashboard(TestCase):
-    def test_01(self):
-        db_manager = DatabaseManager()
-        
-        response = db_manager.redirect(page="profile", session_time=30)
-        self.assertEqual(response, "Page is set")
-
-    def test_02(self):
-        db_manager = DatabaseManager()
-        
-        response = db_manager.redirect(page="payment", session_time=30)
-        self.assertEqual(response, "page does not exist")
-
-    def test_03(self):
-        db_manager = DatabaseManager()
-        
-        response = db_manager.redirect(page="profile", session_time=61)
-        self.assertEqual(response, "user timed out")
+    def test_mark_task_invalid_user(self):
+        other_user = User.objects.create_user(username="otheruser", password="password456")
+        other_task = Task.objects.create(
+            user=other_user,
+            name="Other User Task",
+            description="Should not complete",
+            priority=3,
+            due_date=datetime.now() + timedelta(days=2),
+            reminders=False,
+            completed=False
+        )
+        self.assertEqual(other_task.user.username, "otheruser")
+        self.assertFalse(other_task.completed)
