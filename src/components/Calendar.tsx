@@ -3,10 +3,15 @@ import { ChevronLeftIcon, ChevronRightIcon } from "@heroicons/react/24/solid";
 
 type DayProps = {
   day: number;
+  currentDay: boolean;
 };
-function Day({ day }: DayProps) {
+function Day({ day, currentDay }: DayProps) {
   return (
-    <span className="py-3 rounded-full hover:bg-gray-700 transition-all duration-300 font-bold">
+    <span
+      className={`py-3 rounded-full ${
+        currentDay === true ? "bg-white text-gray-600 hover:text-white" : ""
+      } hover:bg-gray-700 transition-all duration-300 font-bold`}
+    >
       {day}
     </span>
   );
@@ -14,6 +19,7 @@ function Day({ day }: DayProps) {
 
 function Calendar() {
   const date = new Date();
+  console.log(date.getDate() + " - this is the current day");
   const [currentMonth, setCurrentMonth] = useState<number>(date.getMonth());
   const [currentYear, setCurrentYear] = useState<number>(date.getFullYear());
 
@@ -120,7 +126,13 @@ function Calendar() {
             return <div key={index}></div>;
           })}
           {days.map((day, index) => {
-            return <Day key={index} day={day} />;
+            return (
+              <Day
+                key={index}
+                day={day}
+                currentDay={index + 1 === date.getDate()}
+              />
+            );
           })}
         </div>
       </div>
